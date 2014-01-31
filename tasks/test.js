@@ -6,34 +6,48 @@ http://yuilibrary.com/license/
 
 
 var exec = require('child_process').spawn,
-    path = require('path');
+    path = require('path'),
+    fs = require('fs');
 
 module.exports = function(grunt) {
-    var CLI = false;
+    var CLI = false, COVERAGE = false;
 
-    grunt.registerTask('test-cli', 'Testing YUI via the CLI', function() {
+    grunt.registerTask('test-coverage', 'Testing with coverage', function() {
+        COVERAGE = true;
+        grunt.task.run('test');
+    });
+
+    grunt.registerTask('test-cli', 'Testing via the CLI', function() {
         CLI = true;
         grunt.task.run('test');
     });
 
-    grunt.registerTask('test', 'Testing YUI', function() {
-        grunt.log.ok('Testing all modules with yogi');
-
+    grunt.registerMultiTask('test', 'Testing', function() {
         var done = this.async(),
             yogi = path.join(process.cwd(), 'node_modules/yogi/bin/yogi.js'),
+            module_regex = new RegExp('src\/([^\/#]+?)\/'),
+            module = '',
+            self = this,
+            count_tests = this.data.length,
+            effective_count = 0,
             args = [
                 yogi,
                 'test'
             ],
             child;
 
-        // echoecho-based load-tests require a longer timeout.
+        // echo-based load-tests require a longer timeout.
         args.push('-t');
         args.push(120);
 
         if (CLI) {
             CLI = false;
             args.push('--cli');
+        }
+
+        if (COVERAGE) {
+            COVERAGE = false;
+            args.push('--coverage');
         }
 
         if ('TEST_RESULTS_DIR' in process.env) {
@@ -43,18 +57,39 @@ module.exports = function(grunt) {
             args.push(path.join(process.env.TEST_RESULTS_DIR, 'junit.xml'));
         }
 
-        child = exec(process.execPath, args, {
-            cwd: path.join(process.cwd(), 'src'),
-            stdio: 'inherit',
-            env: process.env
-        });
+        if (this.target === 'modules') {
+            grunt.util.recurse(this.data, function (m) {
+                if (module_regex.test(m)) {
+                    module = module_regex.exec(m)[1];
+                }
 
-        child.on('exit', function(code) {
-            if (code) {
-                grunt.fail.fatal('yogi test exited with code: ' + code);
-            }
-            done();
-        });
+                if (module && !fs.existsSync('src/'+module+'/tests/unit')) {
+                   return;
+                }
+
+                grunt.log.ok('Testing ' + self.target +': '+ module);
+                effective_count++;
+
+                child = exec(process.execPath, args, {
+                    cwd: path.join(process.cwd(), 'src/'+module),
+                    stdio: 'inherit',
+                    env: process.env
+                });
+                child.on('exit', function(code) {
+                    if (code) {
+                        grunt.fail.fatal('yogi test exited with code: ' + code);
+                    }
+                    count_tests--;
+                    if (effective_count === (self.data.length-count_tests)) {
+                       done();
+                    }
+                });
+            });
+        }
+
+        if (effective_count === 0) {
+           done();
+        }
     });
 };
 
