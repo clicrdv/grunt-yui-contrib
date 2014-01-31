@@ -3,7 +3,7 @@ Grunt YUI Contrib
 
 Various Grunt tasks to be used within a YUI project. 
 
-** Note: Be careful, this version of grunt-yui-contrib isn't in the NPM repositories. You will need to target the GitHub tar package in your ```package.json``` if you wish to use it.**
+__Note: Be careful, this version of grunt-yui-contrib isn't in the NPM repositories. You will need to target the GitHub tar package in your ```package.json``` if you wish to use it.__
 __(```"grunt-yui-contrib": "https://github.com/popox/grunt-yui-contrib/tarball/vX.Y.Z"``` for version X.Y.Z for example)__
 
 Configuration
