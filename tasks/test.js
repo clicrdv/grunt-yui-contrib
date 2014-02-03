@@ -10,7 +10,7 @@ var exec = require('child_process').spawn,
     fs = require('fs');
 
 module.exports = function(grunt) {
-    var CLI = false, COVERAGE = false;
+    var CLI = false, COVERAGE = false, BASE_PORT = 5000;
 
     grunt.registerTask('test-coverage', 'Testing with coverage', function() {
         COVERAGE = true;
@@ -58,6 +58,9 @@ module.exports = function(grunt) {
         }
 
         if (this.target === 'modules') {
+            if (this.data.length > 0) {
+               args.push('--port');
+            }
             grunt.util.recurse(this.data, function (m) {
                 if (module_regex.test(m)) {
                     module = module_regex.exec(m)[1];
@@ -70,11 +73,16 @@ module.exports = function(grunt) {
                 grunt.log.ok('Testing ' + self.target +': '+ module);
                 effective_count++;
 
+                // To be sure not to concurrence with another test
+                var port = BASE_PORT+effective_count*100;
+                args.push(''+port);
                 child = exec(process.execPath, args, {
                     cwd: path.join(process.cwd(), 'src/'+module),
                     stdio: 'inherit',
                     env: process.env
                 });
+                args.pop();
+
                 child.on('exit', function(code) {
                     if (code) {
                         grunt.fail.fatal('yogi test exited with code: ' + code);
