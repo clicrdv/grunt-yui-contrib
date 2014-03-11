@@ -54,17 +54,15 @@ module.exports = function(grunt) {
             grunt.log.ok('Saving JUnitXML file to: ' + process.env.TEST_RESULTS_DIR);
             args.push('--junit');
             args.push('--outfile');
-	    var writable = false, index = 0;
-	    while (!writable) {
-		var results_file = index + '-junit.xml';
-		fs.existsSync(path.join(process.env.TEST_RESULTS_DIR, results_file), function(exists) {
-		    if (!exists) {
-			args.push(path.join(process.env.TEST_RESULTS_DIR, results_file));
-			writable = true;
-		    }
-		});            
-		index++;
-	    }
+            var new_file = false, index = 0;
+            while (!new_file) {
+               var results_file = index + '-junit.xml';
+               if (!fs.existsSync(path.join(process.env.TEST_RESULTS_DIR, results_file))) {
+                  args.push(path.join(process.env.TEST_RESULTS_DIR, results_file));
+                  new_file = true;
+               }
+               index++;
+             }
         }
 
         if (this.target === 'modules') {

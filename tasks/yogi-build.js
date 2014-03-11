@@ -56,7 +56,7 @@ module.exports = function(grunt) {
                  walkArgs.push(module_regex.exec(m)[1]);
                  modules.push(module_regex.exec(m)[1]);
               }
-           })
+           });
         }
 
         grunt.log.ok('Building ' + this.target + ': ' + modules);
